@@ -27,21 +27,25 @@ export function parseShowreels(raw?: string | null): ShowreelItem[] {
   try {
     const parsed = JSON.parse(raw) as unknown
     if (Array.isArray(parsed)) {
-      return parsed
-        .map((item, i) => {
-          if (!item || typeof item !== 'object') return null
-          const row = item as Record<string, unknown>
-          const title = String(row.title || row.name || `Clip ${i + 1}`).trim()
-          const url = String(row.url || row.link || '').trim()
-          if (!title && !url) return null
-          return {
-            id: String(row.id || newId()),
-            title: title || 'Untitled clip',
-            url,
-            note: row.note ? String(row.note) : undefined,
-          }
-        })
-        .filter((x): x is ShowreelItem => Boolean(x))
+      const items: ShowreelItem[] = []
+      for (let i = 0; i < parsed.length; i++) {
+        const item = parsed[i]
+        if (!item || typeof item !== 'object') continue
+        const row = item as Record<string, unknown>
+        const title = String(row.title || row.name || `Clip ${i + 1}`).trim()
+        const url = String(row.url || row.link || '').trim()
+        if (!title && !url) continue
+        const showreel: ShowreelItem = {
+          id: String(row.id || newId()),
+          title: title || 'Untitled clip',
+          url,
+        }
+        if (row.note) {
+          showreel.note = String(row.note)
+        }
+        items.push(showreel)
+      }
+      return items
     }
   } catch {
     // legacy plain text / line list
